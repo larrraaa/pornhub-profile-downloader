@@ -1,5 +1,6 @@
 import os
 import time
+import argparse
 import requests
 from bs4 import BeautifulSoup
 import yt_dlp as youtube_dl
@@ -9,11 +10,12 @@ import sys
 RATE_LIMIT_SECONDS = 1
 
 
-def get_video_urls_from_page(page_url):
+def get_video_urls_from_page(page_url, proxy=None):
     video_urls = []
+    proxies = {'http': proxy, 'https': proxy} if proxy else None
 
     try:
-        response = requests.get(page_url)
+        response = requests.get(page_url, proxies=proxies)
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
 
@@ -31,14 +33,14 @@ def get_video_urls_from_page(page_url):
     return video_urls
 
 
-def get_all_video_urls(profile_url):
+def get_all_video_urls(profile_url, proxy=None):
     all_video_urls = []
     page_number = 1
 
     while True:
         page_url = f"{profile_url}?page={page_number}"
 
-        video_urls = get_video_urls_from_page(page_url)
+        video_urls = get_video_urls_from_page(page_url, proxy=proxy)
 
         if not video_urls:
             # Wenn keine Videos gefunden werden, beenden
@@ -71,7 +73,8 @@ def normalize_name(name):
     # Ersetze Bindestriche durch Leerzeichen und konvertiere in Kleinbuchstaben
     return name.replace('-', ' ').lower()
 
-def download_video(url, folder_path, creator_name):
+
+def download_video(url, folder_path, creator_name, proxy=None):
     def progress_hook(d):
         if d['status'] == 'downloading':
             total = d.get('total_bytes', 0)
@@ -98,6 +101,10 @@ def download_video(url, folder_path, creator_name):
         'quiet': True,  # Do not display verbose info
     }
 
+    # Add proxy to yt-dlp if provided
+    if proxy:
+        ydl_opts['proxy'] = proxy
+
     try:
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
             info_dict = ydl.extract_info(url, download=False)
@@ -117,7 +124,7 @@ def download_video(url, folder_path, creator_name):
         return False  # Video not downloaded
 
 
-def download_videos_from_file(filename, folder_path, creator_name, count=None):
+def download_videos_from_file(filename, folder_path, creator_name, proxy=None, count=None):
     try:
         with open(filename, 'r') as file:
             urls = file.readlines()
@@ -130,7 +137,7 @@ def download_videos_from_file(filename, folder_path, creator_name, count=None):
                 break
 
             print(f"Checking URL: {url}")
-            if download_video(url, folder_path, creator_name):
+            if download_video(url, folder_path, creator_name, proxy=proxy):
                 downloaded_count += 1
 
             # Rate Limiter: Short pause between video downloads
@@ -152,13 +159,22 @@ def shutdown_pc():
     elif sys.platform == 'linux':
         os.system('sudo shutdown -h now')
 
+
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Download videos from a Pornhub creator profile.")
+    parser.add_argument('--proxy', type=str, default=None,
+                        help='Optional proxy URL (e.g. http://127.0.0.1:8080 or socks5://user:pass@host:port)')
+    args = parser.parse_args()
+
+    if args.proxy:
+        print(f"Using proxy: {args.proxy}")
+
     creator = input("Gib den Content Creator Namen ein: ")
     profile_url = f"https://de.pornhub.org/model/{convert_creator_name(creator)}/videos"
 
     print("Scanning the page for videos...")
 
-    all_urls = get_all_video_urls(profile_url)
+    all_urls = get_all_video_urls(profile_url, proxy=args.proxy)
 
     if all_urls:
         save_urls_to_file(all_urls, 'phvid.txt')
@@ -186,11 +202,11 @@ if __name__ == "__main__":
                 if number == 'N':
                     print("No videos will be downloaded.")
                 elif number == 'A':
-                    downloaded_count = download_videos_from_file('phvid.txt', folder_path, creator)
+                    downloaded_count = download_videos_from_file('phvid.txt', folder_path, creator, proxy=args.proxy)
                 else:
                     try:
                         number = int(number)
-                        downloaded_count = download_videos_from_file('phvid.txt', folder_path, creator, number)
+                        downloaded_count = download_videos_from_file('phvid.txt', folder_path, creator, proxy=args.proxy, count=number)
                     except ValueError:
                         downloaded_count = 0  # Ignore invalid input
 
