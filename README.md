@@ -1,12 +1,18 @@
 # Pornhub Profile Downloader
 
+> **Last Updated:** April 26, 2026 — Added proxy support, improved CLI options.
+
 ## Description
 
-This tool allows you to download videos from a specific content creator’s profile on Pornhub. It scrapes the creator's profile page and downloads all the available videos. The tool is intended for personal use and educational purposes only. **It should only be applied to your own profiles or profiles for which you have explicit permission**.
+This tool allows you to download videos from a specific content creator's profile on Pornhub. It scrapes the creator's profile page and downloads all the available videos. The tool is intended for personal use and educational purposes only. **It should only be applied to your own profiles or profiles for which you have explicit permission**.
 
-The tool uses `yt-dlp` for the video download functionality and `BeautifulSoup` for web scraping. With a simple command-line interface, users can download all videos from a creator’s profile.
+The tool uses `yt-dlp` for the video download functionality and `BeautifulSoup` for web scraping. With a simple command-line interface, users can download all videos from a creator's profile.
 
 > **Important Note:** Use this tool responsibly and respect content creators' rights. It should only be used on your own profiles or with permission from the content creator.
+
+## What's New (April 26, 2026)
+
+- **Proxy support** — Route all requests through a proxy with `--proxy`. Works with HTTP, HTTPS, and SOCKS5 proxies. Completely optional — the tool works fine without it.
 
 ## Installation
 
@@ -32,25 +38,15 @@ Follow these steps to install the dependencies:
    pip install -r requirements.txt
    ```
 
-### Libraries:
+### Libraries
 
 - `requests` – for fetching web pages.
 - `beautifulsoup4` – for web scraping.
 - `yt-dlp` – for downloading videos.
 
-Create a `requirements.txt` file that includes the dependencies:
-
-```text
-requests
-beautifulsoup4
-yt-dlp
-```
-
 ## Usage
 
 1. **Run the tool**:
-
-   Execute the script to download videos from a specific content creator:
 
    ```bash
    python ph_downloader.py
@@ -60,7 +56,24 @@ yt-dlp
 
 3. The tool saves the found URLs in a text file (`phvid.txt`). You can specify how many videos to download or download all of them.
 
-4. You can also adjust the domain to your region. By default, `https://de.pornhub.org` is used, but you can change the URL in the `ph_downloader.py` file at the line `profile_url = f"https://de.pornhub.org/model/{convert_creator_name(creator)}/videos"`.
+4. You can also adjust the domain to your region. By default, `https://de.pornhub.org` is used, but you can change the URL in the `ph_downloader.py` file.
+
+### Proxy Usage (Optional)
+
+If you want to route traffic through a proxy, you can pass it as a command-line argument:
+
+```bash
+python ph_downloader.py --proxy http://127.0.0.1:8080
+python ph_downloader.py --proxy socks5://user:pass@proxy-server:1080
+```
+
+The proxy is **entirely optional**. If you don't provide `--proxy`, the tool connects directly as before.
+
+Supported proxy formats:
+- `http://host:port`
+- `https://host:port`
+- `socks5://host:port`
+- `socks5://user:password@host:port`
 
 ## License
 
